@@ -15,7 +15,7 @@ QUESTIONS = [
   "question": r"A construction company is owned by two partners $X$ and $Y$ and it is agreed that their profit will be divided in the ratio $4:5$. At the end of the year, $Y$ received ₦5,000.00 more than $X$. What is the total profit of the company for the year?",
   "options": [r"₦20,000.00", r"₦25,000.00", r"₦30,000.00", r"₦15,000.00", r"₦45,000.00"],
   "correct": "E",
-  "explanation": r"Divide the profit into parts: $X$ gets $4$ parts and $Y$ gets $5$ parts, total $4 + 5 = 9$ parts. The difference between their shares is $5 - 4 = 1$ part, and we are told that $1$ part is ₦5,000. Total profit $= 9 \times 5{,}000 = ₦45{,}000$."
+  "explanation": r"Divide the profit into parts: $X$ gets $4$ parts and $Y$ gets $5$ parts, total $4 + 5 = 9$ parts. The difference between their shares is $5 - 4 = 1$ part, and we are told that $1$ part is ₦5,000. Total profit $= 9 \times 5{,}000 =$ ₦45{,}000."
  },
  {
   "id": 3, "year": 1983, "subject": "mathematics", "topic": "Geometry",
