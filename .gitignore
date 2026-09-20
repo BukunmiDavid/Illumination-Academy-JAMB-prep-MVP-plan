@@ -1,0 +1,23 @@
+# Python / FastAPI
+__pycache__/
+api/.venv/
+api/storage.db
+*.pyc
+
+# Node
+node_modules/
+dist/
+web/dist/
+
+# WhatsApp bridge
+wa/auth/
+wa/sessions.json
+wa/.env
+
+# config & secrets
+.env
+api/.env
+
+# OS
+.DS_Store
+Thumbs.db

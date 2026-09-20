@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: illumination-academy-api
+    runtime: python
+    rootDir: api
+    plan: free
+    buildCommand: pip install -r requirements-prod.txt
+    startCommand: gunicorn app.main:app --workers 1 --timeout 90 --k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: WELCOME_MESSAGE
+        value: "Welcome to Illumination Academy! We will prepare you for your exams."
+      - key: CORS_ORIGINS
+        value: "*"
