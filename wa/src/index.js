@@ -181,6 +181,7 @@ async function teacherReply(s, text) {
     messages: [...s.history, { role: "user", content: text }],
     subject: s.subject,
     language: s.lang,
+    channel: "whatsapp",
   };
   const res = await fetch(`${API_URL}/api/chat/sync`, {
     method: "POST",
@@ -189,10 +190,25 @@ async function teacherReply(s, text) {
   });
   if (!res.ok) return `[Sorry, the teacher service replied ${res.status}. Try again in a moment.]`;
   const data = await res.json();
-  const reply = String(data.text ?? "").trim() || "[The teacher had nothing to say. Try again?]";
+  const reply = normalizeReply(String(data.text ?? "")) || "[The teacher had nothing to say. Try again?]";
   pushHistory(s, "user", text);
-  pushHistory(s, "assistant", reply.slice(0, 2000));
-  return reply;
+  pushHistory(s, "assistant", cutReply(reply));
+  return cutReply(reply);
+}
+
+function normalizeReply(text) {
+  return text
+    .trim()
+    .replace(/\*\*(.+?)\*\*/g, "*$1*")
+    .replace(/(^\s*[-#*]*\s+)/gm, "")
+    .trim();
+}
+
+function cutReply(text, max = 1800) {
+  if (text.length <= max) return text;
+  const end = text.slice(0, max);
+  const cut = Math.max(end.lastIndexOf("\n"), end.lastIndexOf(". "), end.lastIndexOf(" "));
+  return `${end.slice(0, cut > 0 ? cut + 1 : max)}…`;
 }
 
 function helpText() {

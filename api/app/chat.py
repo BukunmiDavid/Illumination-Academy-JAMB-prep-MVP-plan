@@ -16,9 +16,9 @@ def get_client() -> AsyncOpenAI:
         )
     return _client
 
-def system_prompt(subject: str = "Mathematics", language: str = "en") -> str:
+def system_prompt(subject: str = "Mathematics", language: str = "en", channel: str = "web") -> str:
     """System prompt for the JAMB teacher bot."""
-    return (
+    base = (
         "You are a patient, friendly teacher at Illumination Academy preparing "
         f"Nigerian students for the JAMB exam. The student is practising {subject}. "
         "Explain clearly and simply, following the national curriculum, and use "
@@ -26,18 +26,28 @@ def system_prompt(subject: str = "Mathematics", language: str = "en") -> str:
         "answer in that same language. Keep answers focused and not too long unless "
         "the student asks for more detail."
     )
+    if channel in ("whatsapp", "telegram"):
+        base += (
+            " This conversation happens on WhatsApp chat, which renders NO Markdown, "
+            "tables or LaTeX. Reply in plain text only: no headings, no #, no | tables, "
+            "no * or ** emphasis, no $...$, \\[...\\] or \\(...\\) math. Write math inline "
+            "in Unicode or ASCII, e.g. 2^3 × 2^5 = 2^8, x², √16, 1/8, 2**3. "
+            "Keep answers compact and readable on a phone screen."
+        )
+    return base
 
 async def stream_reply(
     messages: list[dict],
     subject: str = "Mathematics",
     language: str = "en",
     model: Optional[str] = None,
+    channel: str = "web",
 ) -> AsyncIterator[str]:
     """Yield text deltas of the assistant reply."""
     if not config.GROQ_API_KEY:
         yield "The AI teacher is not configured yet. Add GROQ_API_KEY to api/.env to enable chat."
         return
-    msgs = [{"role": "system", "content": system_prompt(subject, language)}] + messages
+    msgs = [{"role": "system", "content": system_prompt(subject, language, channel)}] + messages
     try:
         resp = await get_client().chat.completions.create(
             model=model or config.GROQ_MODEL,
@@ -60,9 +70,10 @@ async def full_reply(
     subject: str = "Mathematics",
     language: str = "en",
     model: Optional[str] = None,
+    channel: str = "web",
 ) -> str:
     """Non-streaming convenience for the WhatsApp bridge."""
     parts = []
-    async for part in stream_reply(messages, subject, language, model):
+    async for part in stream_reply(messages, subject, language, model, channel):
         parts.append(part)
     return "".join(parts)
