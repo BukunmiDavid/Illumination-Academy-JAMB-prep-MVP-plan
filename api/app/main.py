@@ -86,7 +86,7 @@ async def chat_sync(req: ChatRequest):
 
 
 @app.post("/api/transcribe")
-async def transcribe(
+async def transcribe_audio_endpoint(
     audio: UploadFile = File(...),
     language: str = Form(default=""),
 ):

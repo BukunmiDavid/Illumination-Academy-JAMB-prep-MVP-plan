@@ -10,14 +10,17 @@ interface Part {
 
 function splitMath(input: string): Part[] {
   const parts: Part[] = [];
-  const re = /\$\$([\s\S]+?)\$\$|\$([^$]+)\$/g;
+  const re = /\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\$([^$]+)\$|\\\(([^\\]+)\\\)/g;
   let last = 0;
   for (const m of input.matchAll(re)) {
     if (m.index !== undefined && m.index > last) {
       parts.push({ text: input.slice(last, m.index) });
     }
-    const math = (m[1] ?? m[2] ?? "").trim();
-    parts.push({ math, block: !!m[1] });
+    const math = ((m[1] ?? m[2] ?? m[3] ?? m[4]) ?? "").trim();
+    parts.push({
+      math,
+      block: !!(m[1] || m[2]),
+    });
     last = m.index + m[0].length;
   }
   if (last < input.length) parts.push({ text: input.slice(last) });
