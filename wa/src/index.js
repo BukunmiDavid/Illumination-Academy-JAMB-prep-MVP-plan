@@ -198,11 +198,31 @@ async function teacherReply(s, text) {
 }
 
 function normalizeReply(text) {
-  return text
-    .trim()
+  let t = text.trim();
+  // LaTeX-ish leftovers -> readable ASCII
+  t = t
+    .replace(/\\dfrac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)")
+    .replace(/\\sqrt\[([^{}]*)\]\{([^{}]*)\}/g, "root($1) of $2")
+    .replace(/\\sqrt\{([^{}]*)\}/g, "√($1)")
+    .replace(/\^\{([^}]*)\}/g, "^$1")
+    .replace(/\_\{([^}]*)\}/g, "_$1")
+    .replace(/\\times/g, "×")
+    .replace(/\\cdot/g, "·")
+    .replace(/\\div/g, "÷")
+    .replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, "($1)/($2)")
+    .replace(/\\left|\\right|\\displaystyle|\\;|\\,/g, "")
+    // strip $...$, \[...\], \(...\)  delimiters (content stays)
+    .replace(/\$\$|\$|\\\[|\\\]|\\\(|\\\)/g, "");
+  // strip markdown artifacts
+  t = t
+    .replace(/^\s*#{1,6}\s*/gm, "")
+    .replace(/^\s*(---+|\*{3,}|_{3,})\s*$/gm, "")
+    .replace(/^\s*\|.*\|\s*$/gm, "")
     .replace(/\*\*(.+?)\*\*/g, "*$1*")
-    .replace(/(^\s*[-#*]*\s+)/gm, "")
-    .trim();
+    .replace(/(^\s*[-#*•]\s+)/gm, "");
+  // tidy whitespace
+  t = t.replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  return t;
 }
 
 function cutReply(text, max = 1800) {

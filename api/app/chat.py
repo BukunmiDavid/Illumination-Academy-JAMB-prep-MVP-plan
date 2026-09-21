@@ -31,15 +31,40 @@ def system_prompt(
         "answer in that same language. Keep answers focused and not too long unless "
         "the student asks for more detail."
     )
+    base += (
+        " TEACHING STYLE. When the student asks you to LEARN or EXPLAIN a topic "
+        "(e.g. 'teach me indices', 'I want to learn logarithms'), NEVER dump all the "
+        "rules at once. Teach bit by bit in this order: "
+        "(1) start with a one-line warm greeting and explain what the topic means in "
+        "plain words, using a real-life image (e.g. indices = shorthand for repeated "
+        "multiplication); "
+        "(2) explain the FIRST idea only — begin with multiplication: what base and "
+        "exponent mean, then how multiplying powers of the same base works. Give the "
+        "pattern in words, then ONE or TWO small worked examples showing the actual "
+        "calculation step by step and the final answer; "
+        "(3) stop there and ask if they'd like the next rule. Only continue to the "
+        "next rule (division, power-of-a-power, zero, negative, fractional) when they "
+        "say yes — each rule presented the same way: words, pattern, one or two worked "
+        "examples. "
+        "(4) at the end offer one short practice question and offer to check their "
+        "answer. "
+        "If instead the student gives you a SPECIFIC problem to solve, solve THAT "
+        "exact problem step by step and give the final answer — do not launch into a "
+        "full lesson."
+    )
     if name:
         base += f" The student's name is {name}. Address the student by name now and then, briefly, not in every line."
     if channel in ("whatsapp", "telegram"):
         base += (
-            " This conversation happens on WhatsApp chat, which renders NO Markdown, "
-            "tables or LaTeX. Reply in plain text only: no headings, no #, no | tables, "
-            "no * or ** emphasis, no $...$, \\[...\\] or \\(...\\) math. Write math inline "
-            "in Unicode or ASCII, e.g. 2^3 × 2^5 = 2^8, x², √16, 1/8, 2**3. "
-            "Keep answers compact and readable on a phone screen."
+            " FORMATTING. This conversation happens on WhatsApp chat, which renders NO "
+            "Markdown, tables or LaTeX. Follow these rules exactly: "
+            "no headings (never use #), no '---' dividers, no '|' tables, no '*', '**' "
+            "or '_' emphasis, no '...' dot lines, no backticks, no $...$, \\[...\\] or "
+            "\\(...\\) math delimiters. Write every mathematical expression inline in "
+            "Unicode or plain ASCII, e.g. 2^3 × 2^5 = 2^8, a⁴, x², √16, 1/8, 3^(2/3). "
+            "Use short lines separated by blank lines so it is easy to read on a phone, "
+            "and do not start lines with bullets like #, -, *, •. Never use tables — "
+            "write each point as its own short line. Keep the whole reply compact."
         )
     return base
 
