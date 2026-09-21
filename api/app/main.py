@@ -38,6 +38,7 @@ class ChatRequest(BaseModel):
     subject: str = "Mathematics"
     language: str = "en"
     channel: str = "web"
+    name: str = ""
 
 
 class ResultRequest(BaseModel):
@@ -52,6 +53,7 @@ class ResultRequest(BaseModel):
 class WhatsAppInbound(BaseModel):
     phone: str
     text: str
+    name: str = ""
 
 
 @app.get("/")
@@ -73,7 +75,9 @@ def subjects():
 @app.post("/api/chat")
 async def chat_stream(req: ChatRequest):
     async def event_stream():
-        async for delta in chat.stream_reply(req.messages, req.subject, req.language, channel=req.channel):
+        async for delta in chat.stream_reply(
+            req.messages, req.subject, req.language, channel=req.channel, name=req.name
+        ):
             yield f"data: {json.dumps({'delta': delta}, ensure_ascii=False)}\n\n"
         yield "data: [DONE]\n\n"
 
@@ -82,7 +86,9 @@ async def chat_stream(req: ChatRequest):
 
 @app.post("/api/chat/sync")
 async def chat_sync(req: ChatRequest):
-    text = await chat.full_reply(req.messages, req.subject, req.language, channel=req.channel)
+    text = await chat.full_reply(
+        req.messages, req.subject, req.language, channel=req.channel, name=req.name
+    )
     return {"text": text}
 
 
@@ -121,7 +127,7 @@ async def whatsapp_webhook(req: WhatsAppInbound):
     if not text.strip():
         return {"reply": settings.WELCOME_MESSAGE}
     reply = await chat.full_reply(
-        [{"role": "user", "content": text}], "Mathematics", "en", channel="whatsapp"
+        [{"role": "user", "content": text}], "Mathematics", "en", channel="whatsapp", name=req.name
     )
     return {"reply": reply}
 

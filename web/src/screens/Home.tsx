@@ -2,6 +2,7 @@ import type { SavedResult } from "../types";
 import { lastResult } from "../lib/exam";
 import WhatsAppCard from "../components/WhatsAppCard";
 import { waStartUrl, WHATSAPP_NUMBER } from "../lib/wa";
+import { loadProfile, firstName } from "../lib/profile";
 
 export default function Home({
   onStart,
@@ -14,6 +15,7 @@ export default function Home({
 }) {
   const saved: SavedResult | null = lastResult();
   const waUrl = waStartUrl();
+  const profName = firstName(loadProfile());
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
@@ -23,6 +25,11 @@ export default function Home({
         </div>
         <h1 className="text-3xl font-bold text-slate-900">Illumination Academy</h1>
         <p className="mt-1 text-slate-600">Prepare for JAMB. Practice offline. Learn with your AI teacher.</p>
+        {profName && (
+          <p className="mt-2 text-sm font-medium text-emerald-600">
+            Welcome back, {profName}! 👋 Your teacher and results remember you.
+          </p>
+        )}
       </header>
 
       {saved && (

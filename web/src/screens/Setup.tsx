@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ExamConfig } from "../types";
 import { letter } from "../lib/exam";
+import { loadProfile, saveProfile } from "../lib/profile";
 
 export default function Setup({
   total,
@@ -14,6 +15,7 @@ export default function Setup({
   const [count, setCount] = useState(20);
   const [seconds, setSeconds] = useState(60);
   const [shuffle, setShuffle] = useState(true);
+  const [profile, setProfile] = useState(loadProfile);
   const counts = [10, 20, total];
   const timers = [40, 60, 90];
 
@@ -78,9 +80,36 @@ export default function Setup({
         <span className="text-sm text-slate-700">Shuffle question order</span>
       </label>
 
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+        <p className="text-sm font-semibold text-slate-700">
+          {profile.name ? `Hello, ${profile.name}! 👋` : "Tell us your name"}
+        </p>
+        <p className="text-xs text-slate-500">
+          So the teacher and your results remember you — stored only on this device.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <input
+            value={profile.name}
+            onChange={(e) => setProfile((p) => ({ ...p, name: e.target.value }))}
+            placeholder="Your name (e.g. Chinedu)"
+            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0d122b]"
+          />
+          <input
+            value={profile.phone}
+            onChange={(e) => setProfile((p) => ({ ...p, phone: e.target.value }))}
+            placeholder="WhatsApp number (optional)"
+            inputMode="tel"
+            className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus:border-[#0d122b]"
+          />
+        </div>
+      </div>
+
       <div className="mt-8 flex gap-3">
         <button
-          onClick={() => onLaunch({ count, secondsPerQuestion: seconds, shuffle })}
+          onClick={() => {
+            saveProfile(profile);
+            onLaunch({ count, secondsPerQuestion: seconds, shuffle });
+          }}
           className="flex-1 rounded-xl bg-[#0d122b] px-4 py-4 text-lg font-bold text-white active:scale-[.99]"
         >
           Begin Exam

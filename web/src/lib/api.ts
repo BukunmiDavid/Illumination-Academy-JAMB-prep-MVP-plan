@@ -11,11 +11,12 @@ export async function sendChat(
   language: string,
   onDelta: (d: string) => void,
   onDone: () => void,
+  name = "",
 ): Promise<void> {
   const res = await fetch(`${API}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, subject, language }),
+    body: JSON.stringify({ messages, subject, language, channel: "web", name }),
   });
   if (!res.ok || !res.body) throw new Error(`chat failed: ${res.status}`);
   const reader = res.body.getReader();
@@ -55,7 +56,7 @@ export async function transcribeAudio(file: Blob, language: string): Promise<str
   return j.text ?? "";
 }
 
-export async function saveResult(phone: string, name: string, subject: string, score: number, total: number): Promise<void> {
+export async function sendResult(phone: string, name: string, subject: string, score: number, total: number): Promise<void> {
   try {
     await fetch(`${API}/api/results`, {
       method: "POST",

@@ -1,6 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import MathText from "../components/MathText";
 import { sendChat, transcribeAudio, type ChatMsg } from "../lib/api";
+import { loadProfile, saveProfile, chatKey, firstName, type Profile } from "../lib/profile";
+
+function loadHistory(key: string): DrawerMsg[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      const arr = JSON.parse(raw) as DrawerMsg[];
+      return arr.filter((m) => m && (m.role === "user" || m.role === "assistant") && m.content);
+    }
+  } catch {
+    /* ignore */
+  }
+  return [];
+}
 
 export const LANGUAGES: { code: string; label: string; hint: string }[] = [
   { code: "en", label: "English", hint: "en" },
@@ -27,11 +41,13 @@ export default function ChatDrawer({
   initialQuestion: string | null;
   onConsumed: () => void;
 }) {
+  const [profile, setProfile] = useState<Profile>(() => loadProfile());
   const [msgs, setMsgs] = useState<DrawerMsg[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [language, setLanguage] = useState("en");
   const [editing, setEditing] = useState<{ text: string } | null>(null);
+  const [awaitingName, setAwaitingName] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const seededRef = useRef(false);
 
@@ -41,6 +57,23 @@ export default function ChatDrawer({
     async (rawText: string) => {
       const text = rawText.trim();
       if (!text || busy) return;
+      if (awaitingName) {
+        const p = { ...loadProfile(), name: text.slice(0, 60) };
+        saveProfile(p);
+        setProfile(p);
+        setAwaitingName(false);
+        pushUser(text);
+        setInput("");
+        setEditing(null);
+        setMsgs((m) => [
+          ...m,
+          {
+            role: "assistant",
+            content: `Nice to meet you, ${firstName(p)}! 🎓 Ask me anything about ${subject} — or tap the mic to speak. I’ll remember you.`,
+          },
+        ]);
+        return;
+      }
       pushUser(text);
       setInput("");
       setEditing(null);
@@ -63,6 +96,7 @@ export default function ChatDrawer({
             });
           },
           () => setBusy(false),
+          firstName(profile),
         );
       } catch {
         setMsgs((m) => {
@@ -76,31 +110,63 @@ export default function ChatDrawer({
         setBusy(false);
       }
     },
-    [msgs, busy, subject, language],
+    [msgs, busy, subject, language, awaitingName, profile],
   );
 
   useEffect(() => {
-    if (open && initialQuestion && !seededRef.current) {
+    if (open && initialQuestion && !seededRef.current && firstName(profile)) {
       seededRef.current = true;
       const q = initialQuestion;
       void ask(`Can you explain this question to me step by step? ${q}`);
       onConsumed();
     }
-  }, [open, initialQuestion, ask, onConsumed]);
+  }, [open, initialQuestion, ask, onConsumed, profile]);
 
   useEffect(() => {
     if (!open) return;
     if (msgs.length === 0) {
-      setMsgs([
-        {
-          role: "assistant",
-          content:
-            `Hello! I am your ${subject} teacher at Illumination Academy. ` +
-            "Ask me anything — or tap the mic and speak. You can use English, Pidgin, Yorùbá, Igbo or Hausa.",
-        },
-      ]);
+      const key = chatKey(profile);
+      const saved = loadHistory(key);
+      const known = firstName(profile);
+      if (saved.length > 0) {
+        setMsgs([...saved, { role: "assistant", content: `Welcome back, ${known} 👋 — continuing where you left off.` }]);
+        return;
+      }
+      if (known) {
+        setMsgs([
+          {
+            role: "assistant",
+            content:
+              `Welcome back, ${known}! I am your ${subject} teacher at Illumination Academy. ` +
+              "Ask me anything — or tap the mic and speak. You can use English, Pidgin, Yorùbá, Igbo or Hausa.",
+          },
+        ]);
+      } else {
+        setAwaitingName(true);
+        setMsgs([
+          {
+            role: "assistant",
+            content:
+              `Hello! I am your ${subject} teacher at Illumination Academy. 🎓 ` +
+              "First, what is your name? I will remember you from now on. (You can also skip by giving any question.)",
+          },
+        ]);
+      }
     }
-  }, [open, msgs.length, subject]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, msgs.length, subject, profile]);
+
+  const key = chatKey(profile);
+  useEffect(() => {
+    const done = msgs.some((m) => m.pending);
+    if (!done && msgs.length > 0) {
+      try {
+        localStorage.setItem(key, JSON.stringify(msgs.slice(-20)));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [msgs, key]);
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight });
@@ -118,7 +184,9 @@ export default function ChatDrawer({
           </div>
           <div className="flex-1">
             <p className="font-bold text-slate-900">Ask a Teacher</p>
-            <p className="text-xs text-slate-500">{subject} · replies need internet</p>
+            <p className="text-xs text-slate-500">
+              {subject} · {firstName(profile) ? `Hi, ${firstName(profile)} · ` : ""}replies need internet
+            </p>
           </div>
           <span className="text-2xl leading-none text-red-500">●</span>
           <button onClick={onClose} className="ml-1 rounded-lg px-2 py-1 text-slate-400 hover:bg-slate-100" aria-label="Close chat">

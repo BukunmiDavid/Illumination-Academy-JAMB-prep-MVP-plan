@@ -16,7 +16,12 @@ def get_client() -> AsyncOpenAI:
         )
     return _client
 
-def system_prompt(subject: str = "Mathematics", language: str = "en", channel: str = "web") -> str:
+def system_prompt(
+    subject: str = "Mathematics",
+    language: str = "en",
+    channel: str = "web",
+    name: str = "",
+) -> str:
     """System prompt for the JAMB teacher bot."""
     base = (
         "You are a patient, friendly teacher at Illumination Academy preparing "
@@ -26,6 +31,8 @@ def system_prompt(subject: str = "Mathematics", language: str = "en", channel: s
         "answer in that same language. Keep answers focused and not too long unless "
         "the student asks for more detail."
     )
+    if name:
+        base += f" The student's name is {name}. Address the student by name now and then, briefly, not in every line."
     if channel in ("whatsapp", "telegram"):
         base += (
             " This conversation happens on WhatsApp chat, which renders NO Markdown, "
@@ -42,12 +49,13 @@ async def stream_reply(
     language: str = "en",
     model: Optional[str] = None,
     channel: str = "web",
+    name: str = "",
 ) -> AsyncIterator[str]:
     """Yield text deltas of the assistant reply."""
     if not config.GROQ_API_KEY:
         yield "The AI teacher is not configured yet. Add GROQ_API_KEY to api/.env to enable chat."
         return
-    msgs = [{"role": "system", "content": system_prompt(subject, language, channel)}] + messages
+    msgs = [{"role": "system", "content": system_prompt(subject, language, channel, name)}] + messages
     try:
         resp = await get_client().chat.completions.create(
             model=model or config.GROQ_MODEL,
@@ -71,9 +79,10 @@ async def full_reply(
     language: str = "en",
     model: Optional[str] = None,
     channel: str = "web",
+    name: str = "",
 ) -> str:
     """Non-streaming convenience for the WhatsApp bridge."""
     parts = []
-    async for part in stream_reply(messages, subject, language, model, channel):
+    async for part in stream_reply(messages, subject, language, model, channel, name):
         parts.append(part)
     return "".join(parts)

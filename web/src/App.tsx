@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import questionsData from "./data/questions.json";
 import type { ExamAnswer, ExamConfig, Question, QuestionBank } from "./types";
 import { buildPaper, grade, saveResult, recordOfflineAttempt } from "./lib/exam";
+import { sendResult } from "./lib/api";
+import { loadProfile } from "./lib/profile";
 import Home from "./screens/Home";
 import Setup from "./screens/Setup";
 import Exam from "./screens/Exam";
@@ -44,6 +46,10 @@ export default function App() {
       subject: bank.subject,
       at: Date.now(),
     });
+    const prof = loadProfile();
+    if (prof.name || prof.phone) {
+      void sendResult(prof.phone, prof.name, bank.subject, g.score, g.total);
+    }
     setScreen("results");
   };
 

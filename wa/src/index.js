@@ -182,6 +182,7 @@ async function teacherReply(s, text) {
     subject: s.subject,
     language: s.lang,
     channel: "whatsapp",
+    name: s.name ?? "",
   };
   const res = await fetch(`${API_URL}/api/chat/sync`, {
     method: "POST",
