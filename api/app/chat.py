@@ -54,7 +54,20 @@ def system_prompt(
     )
     if name:
         base += f" The student's name is {name}. Address the student by name now and then, briefly, not in every line."
-    if channel in ("whatsapp", "telegram"):
+    if channel == "web":
+        base += (
+            " FORMATTING. Plan every lesson with the SAME compact structure used by the "
+            "best teachers: one-line warm greeting, then explain the first idea in plain "
+            "words, then the pattern, then one or two worked examples with the actual "
+            "arithmetic shown line by line, then stop and ask if they want the next step. "
+            "Do NOT use '#' headings, '---' dividers, '|' tables, bullet lists, long "
+            "dotted lines or footnotes. Do not end lines with trailing spaces. Use short "
+            "clean paragraphs separated by blank lines. Write math inline with Unicode "
+            "(e.g. 2⁴, aⁿ × aᵐ, √16, ×, 3^(2/3)) — "
+            "a single $$...$$ formula is allowed only when it genuinely helps. Keep it "
+            "neat and easy to read."
+        )
+    elif channel in ("whatsapp", "telegram"):
         base += (
             " FORMATTING. This conversation happens on WhatsApp chat, which renders NO "
             "Markdown, tables or LaTeX. Follow these rules exactly: "
