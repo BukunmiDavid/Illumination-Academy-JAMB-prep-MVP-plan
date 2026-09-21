@@ -69,7 +69,7 @@ export default function ChatDrawer({
           ...m,
           {
             role: "assistant",
-            content: `Nice to meet you, ${firstName(p)}! 🎓 Ask me anything about ${subject} — or tap the mic to speak. I’ll remember you.`,
+            content: `Nice to meet you, ${firstName(p)}! 🎓 I am Illuminator, your ${subject} teacher. Ask me anything — or tap the mic to speak. I’ll remember you.`,
           },
         ]);
         return;
@@ -137,7 +137,7 @@ export default function ChatDrawer({
           {
             role: "assistant",
             content:
-              `Welcome back, ${known}! I am your ${subject} teacher at Illumination Academy. ` +
+              `Welcome back, ${known}! 👋 I am Illuminator, your ${subject} teacher at Illumination Academy. ` +
               "Ask me anything — or tap the mic and speak. You can use English, Pidgin, Yorùbá, Igbo or Hausa.",
           },
         ]);
@@ -147,7 +147,7 @@ export default function ChatDrawer({
           {
             role: "assistant",
             content:
-              `Hello! I am your ${subject} teacher at Illumination Academy. 🎓 ` +
+              `Hello! 👋 I am Illuminator, your ${subject} teacher at Illumination Academy. ` +
               "First, what is your name? I will remember you from now on. (You can also skip by giving any question.)",
           },
         ]);
@@ -183,9 +183,9 @@ export default function ChatDrawer({
             IA
           </div>
           <div className="flex-1">
-            <p className="font-bold text-slate-900">Ask a Teacher</p>
+            <p className="font-bold text-slate-900">Illuminator</p>
             <p className="text-xs text-slate-500">
-              {subject} · {firstName(profile) ? `Hi, ${firstName(profile)} · ` : ""}replies need internet
+              AI teacher · {subject} · {firstName(profile) ? `Hi, ${firstName(profile)} · ` : ""}needs internet
             </p>
           </div>
           <span className="text-2xl leading-none text-red-500">●</span>
@@ -206,7 +206,7 @@ export default function ChatDrawer({
                 }
               >
                 <div className={m.pending ? "animate-pulse" : ""}>
-                  {m.content ? <MathText text={m.content} /> : m.pending && <span>…</span>}
+                  {m.content ? <MathText text={m.content.split("**").join("")} /> : m.pending && <span>…</span>}
                 </div>
               </div>
             </div>

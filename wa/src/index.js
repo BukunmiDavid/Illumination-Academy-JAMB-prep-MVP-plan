@@ -401,7 +401,7 @@ async function handleMessage(jid, msg) {
 
   if (lower === "start") {
     if (registered(s)) {
-      return `Hi ${s.name}! 👋 I'm your Illumination Academy teacher for *${s.subject}*.\n\n` +
+      return `Hi ${s.name}! 👋 I am Illuminator, your ${s.subject} teacher.\n\n` +
         `• Ask me any question — e.g. *explain variation to me*\n` +
         `• Send a voice note in English, Pidgin, Yorùbá, Igbo or Hausa\n` +
         `• Type *quiz* to practise past questions\n` +
@@ -412,7 +412,7 @@ async function handleMessage(jid, msg) {
     sess.step = "name";
     persist();
     return (
-      "Welcome to Illumination Academy! 🎓 I'm your personal JAMB teacher.\n\n" +
+      "Welcome to Illumination Academy! 🎓 I am Illuminator, your personal JAMB teacher.\n\n" +
       "To set up your profile, please tell me your *name*."
     );
   }
