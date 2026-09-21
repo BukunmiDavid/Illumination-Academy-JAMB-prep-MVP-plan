@@ -13,6 +13,8 @@ web/dist/
 wa/auth/
 wa/sessions.json
 wa/.env
+wa/qr.png
+wa/qr.txt
 
 # config & secrets
 .env

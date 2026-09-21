@@ -24,3 +24,4 @@ WELCOME_MESSAGE = os.environ.get(
 )
 DB_PATH = BASE / "storage.db"
 CHAT_FALLBACK_MODEL = "openai/gpt-oss-20b"
+STATS_KEY = os.environ.get("STATS_KEY", "")

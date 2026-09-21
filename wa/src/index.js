@@ -1,10 +1,13 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+import { createServer } from "node:http";
 import { dirname, resolve } from "node:path";
+import { spawn } from "node:child_process";
 import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   downloadMediaMessage,
 } from "@whiskeysockets/baileys";
+import QRCode from "qrcode";
 import pino from "pino";
 
 const API_URL = (process.env.API_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
@@ -49,6 +52,69 @@ function persist() {
 
 function phone(jid) {
   return jid.split("@")[0];
+}
+
+/* ---------- small HTTP page that shows the pairing QR -------------------- */
+
+const QR_PAGE_PORT = Number(process.env.QR_PAGE_PORT ?? 8081);
+const QR_PNG = () => resolve(AUTH_DIR, "..", "qr.png");
+let qrPage = null; // latest html with cache-buster
+let qrServerStarted = false;
+
+function startQrPage() {
+  if (qrServerStarted) return;
+  qrServerStarted = true;
+
+  qrPage =
+    "<!doctype html><meta charset=utf-8><title>Link Illumination Academy on WhatsApp</title>" +
+    "<style>body{font-family:system-ui;text-align:center;padding:24px}img{width:320px;height:320px;border:1px solid #ddd;border-radius:12px}" +
+    "p{color:#555}button{font-size:16px;padding:10px 24px;border-radius:10px;border:0;background:#25D366;color:#fff;font-weight:600;cursor:pointer}</style>" +
+    "<h2>1) Open WhatsApp on your phone</h2>" +
+    "<p>Settings &gt; Linked devices &gt; Link a device, then scan the QR.</p>" +
+    `<img src="/qr.png?t=${Date.now()}" alt="pairing QR">` +
+    "<p>QR refreshes about every 20s. If it looks stale, reload this page.</p>" +
+    `<button onclick="location.reload()">Get fresh QR</button>` +
+    "<p id=s>Waiting for scan…</p>" +
+    '<script>setInterval(()=>fetch("/status").then(r=>r.text()).then(t=>{if(t==="linked")document.getElementById("s").textContent="✅ Linked! You can close this page."}),3000)</script>';
+
+  createServer((req, res) => {
+    if (req.url.startsWith("/qr.png")) {
+      try {
+        const p = QR_PNG();
+        if (!existsSync(p)) {
+          res.writeHead(404);
+          res.end("no QR yet");
+          return;
+        }
+        res.writeHead(200, { "Content-Type": "image/png" });
+        res.end(readFileSync(p));
+      } catch {
+        res.writeHead(500);
+        res.end("error");
+      }
+      return;
+    }
+    if (req.url.startsWith("/status")) {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end(existsSync(credsPath()) ? "linked" : "waiting");
+      return;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(qrPage);
+  })
+    .on("error", (err) => {
+      console.error(`[wa] QR page could not listen on ${QR_PAGE_PORT}:`, err.message);
+    })
+    .listen(QR_PAGE_PORT, () => {
+      console.log(`\n[wa] QR page: http://localhost:${QR_PAGE_PORT}  (open this in your browser)\n`);
+      if (process.platform === "win32") {
+        spawn("cmd", ["/c", "start", "", `http://localhost:${QR_PAGE_PORT}`], { stdio: "ignore", detached: true }).unref();
+      }
+    });
+}
+
+function credsPath() {
+  return resolve(AUTH_DIR, "creds.json");
 }
 
 function isAllowed(jid) {
@@ -184,6 +250,7 @@ function answerLetter(raw) {
 
 async function startWA() {
   loadBank();
+  startQrPage();
   const { state, saveCreds } = await useMultiFileAuthState(AUTH_DIR);
 
   const sock = makeWASocket({
@@ -197,9 +264,16 @@ async function startWA() {
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
-      console.log("\nScan this QR code with your WhatsApp to link:  (linked dev menu > Linked devices)\n");
-      console.log(qr);
-      console.log("\n");
+      const qrPath = QR_PNG();
+      const qrTextPath = resolve(AUTH_DIR, "..", "qr.txt");
+      try {
+        writeFileSync(qrTextPath, qr);
+        QRCode.toFile(qrPath, qr, { width: 480, margin: 2 }).then(() => {
+          console.log(`\n[wa] QR refreshed — open http://localhost:${QR_PAGE_PORT} and scan it.\n`);
+        });
+      } catch (err) {
+        console.log("\n[wa] could not write QR file:", err.message);
+      }
     }
     if (connection === "close") {
       const statusCode = lastDisconnect?.error?.output?.statusCode;
@@ -370,6 +444,13 @@ async function handleMessage(jid, msg) {
   const sess = ensureSession(jid);
   return await teacherReply(sess, text);
 }
+
+process.on("unhandledRejection", (err) => {
+  console.error("[wa] unhandled rejection:", err?.message ?? err);
+});
+process.on("uncaughtException", (err) => {
+  console.error("[wa] uncaught exception:", err?.message ?? err);
+});
 
 startWA().catch((err) => {
   console.error("[wa] fatal:", err);

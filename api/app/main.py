@@ -121,3 +121,25 @@ async def whatsapp_webhook(req: WhatsAppInbound):
         return {"reply": settings.WELCOME_MESSAGE}
     reply = await chat.full_reply([{"role": "user", "content": text}], "Mathematics", "en")
     return {"reply": reply}
+
+
+@app.get("/api/stats")
+def stats(key: str = ""):
+    """Uptime usage counts. Guarded by STATS_KEY when configured."""
+    if settings.STATS_KEY and key != settings.STATS_KEY:
+        raise HTTPException(403, "Invalid stats key")
+    with db.get_conn() as conn:
+        total = conn.execute("SELECT COUNT(*) FROM results").fetchone()[0]
+        phones = conn.execute(
+            "SELECT COUNT(DISTINCT phone) FROM results WHERE phone IS NOT NULL AND phone != ''"
+        ).fetchone()[0]
+        subject_rows = conn.execute(
+            "SELECT subject, COUNT(*) AS n, AVG(score * 1.0 / total) AS avg FROM results WHERE total > 0 GROUP BY subject"
+        ).fetchall()
+    return {
+        "results": total,
+        "unique_students": phones,
+        "subjects": [
+            {"subject": r[0], "exams": r[1], "avg_percent": round((r[2] or 0) * 100, 1)} for r in subject_rows
+        ],
+    }
